@@ -1,4 +1,4 @@
-# ⚡ QuizApp
+# ⚡ Objective Test Manager
 
 > A lightweight, zero-backend online MCQ quiz platform for academic institutions — built with pure HTML, CSS & Vanilla JavaScript.
 
@@ -10,7 +10,7 @@
 
 ## 📖 Overview
 
-QuizApp is a complete online examination system designed for university faculty. It handles everything from question upload and student invitations to real-time result tracking and automated scorecard delivery — all without a single line of server-side code.
+ Objective Test Manager is a complete online examination system designed for university faculty. It handles everything from question upload and student invitations to real-time result tracking and automated scorecard delivery — all without a single line of server-side code.
 
 Drop four files on any Apache or HTML server, open `index.html`, and your quiz is live in minutes.
 
