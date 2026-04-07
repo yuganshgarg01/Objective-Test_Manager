@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizApp — Faculty Panel</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header class="header">
+  <div class="container-wide">
+    <div class="header-inner">
+      <span class="brand">⚡ QuizApp</span>
+      <div class="flex gap-8">
+        <span class="header-badge" id="quizStatusBadge">Setup Mode</span>
+        <a href="quiz.html" target="_blank" class="btn btn-ghost btn-sm">Student View ↗</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ SCREENS ══════════════ -->
+<div class="screen active" id="screenSetup">
+  <div class="container">
+    <div class="page-hero">
+      <h1>Faculty Panel</h1>
+      <p>Configure your quiz, upload questions and launch for students.</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">Quiz Info</div></div>
+      <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">Questions</div></div>
+      <div class="step" id="step3"><div class="step-dot">3</div><div class="step-label">Students</div></div>
+      <div class="step" id="step4"><div class="step-dot">4</div><div class="step-label">Email Setup</div></div>
+      <div class="step" id="step5"><div class="step-dot">5</div><div class="step-label">Launch</div></div>
+    </div>
+
+    <!-- ── STEP 1 ── -->
+    <div id="panelStep1">
+      <div class="card mb-24">
+        <div class="card-title"><span class="icon">🏛️</span> Institute & Faculty Details</div>
+        <div class="form-row">
+          <div class="form-group"><label>Institute Name</label><input type="text" id="instituteName" placeholder="e.g. Jagran Lakecity University" /></div>
+          <div class="form-group"><label>Program Name</label><input type="text" id="programName" placeholder="e.g. B.Tech Computer Science" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Semester</label>
+            <select id="semester">
+              <option value="">Select Semester</option>
+              <option>Semester 1</option><option>Semester 2</option><option>Semester 3</option>
+              <option>Semester 4</option><option>Semester 5</option><option>Semester 6</option>
+              <option>Semester 7</option><option>Semester 8</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Academic Year</label><input type="text" id="academicYear" placeholder="e.g. 2024-25" /></div>
+        </div>
+      </div>
+
+      <div class="card mb-24">
+        <div class="card-title"><span class="icon">📋</span> Subject & Quiz Details</div>
+        <div class="form-row">
+          <div class="form-group"><label>Subject Name</label><input type="text" id="subjectName" placeholder="e.g. Data Structures" /></div>
+          <div class="form-group"><label>Subject Code</label><input type="text" id="subjectCode" placeholder="e.g. CS301" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Faculty Name</label><input type="text" id="facultyName" placeholder="Dr. Sharma" /></div>
+          <div class="form-group"><label>Faculty Email</label><input type="email" id="facultyEmail" placeholder="faculty@jlu.edu.in" /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Duration (minutes)</label><input type="number" id="duration" value="30" min="1" max="180" /></div>
+          <div class="form-group"><label>Total Marks</label><input type="number" id="totalMarks" value="20" min="1" /></div>
+        </div>
+        <div class="text-right mt-16">
+          <button class="btn btn-primary" onclick="goToStep(2)">Next: Add Questions →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2 ── -->
+    <div id="panelStep2" class="hidden">
+      <div class="card mb-16">
+        <div class="card-title"><span class="icon">❓</span> Upload or Paste Questions</div>
+        <div class="tabs" id="qTabs">
+          <button class="tab active" onclick="switchQTab('paste')">📋 Paste Text</button>
+          <button class="tab" onclick="switchQTab('upload')">📁 Upload .docx</button>
+        </div>
+        <div id="tabPaste">
+          <div class="alert alert-info"><span>ℹ️</span><span>Format: <strong>Q1. Question? A) opt B) opt C) opt D) opt Ans: A</strong></span></div>
+          <div class="form-group">
+            <label>Paste Questions</label>
+            <textarea id="questionPaste" placeholder="Q1. What is the capital of India?
+A) Mumbai  B) Delhi  C) Chennai  D) Kolkata
+Ans: B
+
+Q2. Which planet is closest to the Sun?
+A) Earth  B) Mars  C) Mercury  D) Venus
+Ans: C"></textarea>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-primary" onclick="parseQuestions()">Parse Questions</button>
+            <button class="btn btn-ghost" onclick="downloadSampleQuestions()">⬇ Sample Question File</button>
+          </div>
+        </div>
+        <div id="tabUpload" class="hidden">
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('docxFile').click()"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text"><strong>Click to upload</strong> or drag & drop your .docx file</div>
+          </div>
+          <input type="file" id="docxFile" accept=".docx" class="hidden" onchange="handleDocxUpload(event)" />
+        </div>
+      </div>
+      <div class="card mb-16" id="questionPreview" style="display:none">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0"><span class="icon">✅</span> Parsed Questions <span id="qCount" class="badge badge-success" style="margin-left:8px"></span></div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" onclick="downloadAnswerKey()">⬇ Answer Key</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearQuestions()">🗑 Clear</button>
+          </div>
+        </div>
+        <div id="questionList"></div>
+      </div>
+      <div id="parseError" class="alert alert-danger hidden"></div>
+      <div class="flex-between mt-16">
+        <button class="btn btn-ghost" onclick="goToStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="goToStep(3)" id="btnNextStep3" disabled>Next: Add Students →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: STUDENTS (email only) ── -->
+    <div id="panelStep3" class="hidden">
+      <div class="card mb-16">
+        <div class="card-title"><span class="icon">👥</span> Student Email List</div>
+        <div class="alert alert-info">
+          <span>ℹ️</span>
+          <span>Just add student emails. Students will fill in their own Name, JLU ID, and Roll Number when they open the quiz.</span>
+        </div>
+        <div class="tabs" id="sTabs">
+          <button class="tab active" onclick="switchSTab('paste')">📋 Paste Emails</button>
+          <button class="tab" onclick="switchSTab('csv')">📊 Upload CSV</button>
+          <button class="tab" onclick="switchSTab('manual')">✏️ Add One by One</button>
+        </div>
+
+        <!-- Paste emails -->
+        <div id="sTabPaste">
+          <div class="alert alert-info" style="margin-bottom:12px">
+            <span>ℹ️</span><span>One email per line. That's it!</span>
+          </div>
+          <div class="form-group">
+            <label>Paste Student Emails</label>
+            <textarea id="studentPaste" style="min-height:160px" placeholder="rahul@gmail.com
+priya@jlu.edu.in
+amit@gmail.com
+sneha@student.jlu.edu.in"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="parseStudentPaste()">Add Emails</button>
+        </div>
+
+        <!-- CSV upload (email column only) -->
+        <div id="sTabCsv" class="hidden">
+          <div class="upload-area" id="csvUploadArea" onclick="document.getElementById('csvFile').click()"
+               ondragover="handleDragOver2(event)" ondragleave="handleDragLeave2(event)" ondrop="handleCsvDrop(event)">
+            <div class="upload-icon">📊</div>
+            <div class="upload-text"><strong>Click to upload</strong> or drag & drop CSV</div>
+            <div class="upload-text mt-4" style="font-size:0.8rem;color:var(--text3)">One email per row, or a CSV where one column has emails</div>
+          </div>
+          <input type="file" id="csvFile" accept=".csv,.txt" class="hidden" onchange="handleCsvUpload(event)" />
+          <button class="btn btn-ghost btn-sm mt-8" onclick="downloadSampleCSV()">⬇ Download Sample CSV</button>
+        </div>
+
+        <!-- Manual single add -->
+        <div id="sTabManual" class="hidden">
+          <div class="form-group" style="max-width:400px">
+            <label>Student Email</label>
+            <div class="flex gap-8">
+              <input type="email" id="manualEmail" placeholder="student@gmail.com" style="flex:1" />
+              <button class="btn btn-primary" onclick="addEmailManually()">+ Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email preview list -->
+      <div class="card mb-16" id="studentPreview" style="display:none">
+        <div class="flex-between mb-16">
+          <div class="card-title" style="margin-bottom:0">
+            <span class="icon">✅</span> Emails Added
+            <span id="studentCount" class="badge badge-success" style="margin-left:8px"></span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearStudents()">🗑 Clear All</button>
+        </div>
+        <div id="emailTagList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      </div>
+
+      <div id="studentError" class="alert alert-danger hidden"></div>
+      <div class="flex-between mt-16">
+        <button class="btn btn-ghost" onclick="goToStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="goToStep(4)" id="btnNextStep4" disabled>Next: Email Setup →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: EMAIL ── -->
+    <div id="panelStep4" class="hidden">
+      <div class="card mb-16">
+        <div class="card-title"><span class="icon">📧</span> Gmail API Setup</div>
+        <div class="alert alert-warning">
+          <span>⚠️</span>
+          <span>Gmail API is used to send invitation links to students and scorecards after submission.</span>
+        </div>
+        <div class="info-box mb-16">
+          <strong>How to set up:</strong><br>
+          1. Go to <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a> → Create project<br>
+          2. Enable <strong>Gmail API</strong> → Create OAuth 2.0 credentials (Web Application)<br>
+          3. Add your domain to Authorized JavaScript Origins<br>
+          4. Paste your Client ID below and click <strong>Sign in with Google</strong>
+        </div>
+        <div class="form-group">
+          <label>Google OAuth Client ID</label>
+          <input type="text" id="googleClientId" placeholder="xxxxxxxx.apps.googleusercontent.com" />
+        </div>
+        <div class="form-group mt-16">
+          <label>Quiz URL — link students will receive in email</label>
+          <input type="text" id="quizUrl" placeholder="http://yourserver.com/quiz-app/quiz.html" />
+          <div style="font-size:0.78rem;color:var(--text3);margin-top:6px">Enter the full URL of <strong>quiz.html</strong> on your Apache server.</div>
+        </div>
+        <div class="flex gap-8 mt-16">
+          <button class="btn btn-primary" onclick="initGoogleAuth()" id="btnGoogleSignin">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Sign in with Google
+          </button>
+          <button class="btn btn-ghost" onclick="goToStep(5)">Skip — No Email</button>
+        </div>
+        <div id="gmailStatus" class="mt-16 hidden"></div>
+      </div>
+      <div class="flex-between mt-16">
+        <button class="btn btn-ghost" onclick="goToStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="goToStep(5)">Next: Launch →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: LAUNCH ── -->
+    <div id="panelStep5" class="hidden">
+      <div class="card mb-16">
+        <div class="card-title"><span class="icon">🚀</span> Ready to Launch</div>
+        <div class="stats-grid mb-24" id="launchSummary"></div>
+        <div class="alert alert-success">
+          <span>✅</span>
+          <span>On launch, invitation emails will be sent to all <strong><span id="inviteCount">0</span> students</strong> with the direct quiz link.</span>
+        </div>
+        <div class="form-group mt-16">
+          <label>Custom Instructions for Students (optional)</label>
+          <textarea id="quizInstructions" style="min-height:80px" placeholder="e.g. Answer all questions carefully. No negative marking."></textarea>
+        </div>
+
+        <!-- Email Preview -->
+        <div class="card mt-20" style="background:var(--surface2)">
+          <div class="card-title" style="font-size:0.9rem;margin-bottom:12px"><span class="icon">👁</span> Invitation Email Preview</div>
+          <div id="invitePreview" style="font-size:0.85rem;color:var(--text2);line-height:1.8">Fill steps above to see preview.</div>
+        </div>
+
+        <div class="text-center mt-24">
+          <button class="btn btn-success btn-lg" onclick="launchQuiz()" id="btnLaunch">🚀 Launch & Send Invitations</button>
+        </div>
+        <div id="launchProgress" class="hidden mt-16"></div>
+      </div>
+      <div class="flex-between mt-16">
+        <button class="btn btn-ghost" onclick="goToStep(4)">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div class="screen" id="screenDashboard">
+  <div class="container-wide">
+    <div class="page-hero">
+      <div class="flex-between">
+        <div>
+          <h1 id="dashSubject">Live Dashboard</h1>
+          <p id="dashSubInfo" class="text-muted"></p>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost" onclick="resendInvitations()" id="btnResend">🔁 Resend Invitations</button>
+          <button class="btn btn-warning" onclick="endQuiz()">🛑 End Quiz & Send Report</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="statInvited">0</div><div class="stat-label">Invited</div></div>
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Submitted</div></div>
+      <div class="stat-card"><div class="stat-value" id="statAvg">—</div><div class="stat-label">Class Avg</div></div>
+      <div class="stat-card"><div class="stat-value" id="statTop">—</div><div class="stat-label">Top Score</div></div>
+      <div class="stat-card"><div class="stat-value" id="statWarnings">0</div><div class="stat-label">Tab Warnings</div></div>
+    </div>
+
+    <!-- Invitation Status -->
+    <div class="card mt-24 mb-24">
+      <div class="flex-between mb-12">
+        <div class="card-title" style="margin-bottom:0"><span class="icon">📨</span> Invitation Status</div>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('inviteStatusTable').classList.toggle('hidden')">Toggle ▼</button>
+      </div>
+      <div id="inviteStatusTable">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Invite Sent</th><th>Quiz Status</th></tr></thead>
+            <tbody id="inviteTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <div class="flex-between mb-16">
+        <div class="card-title" style="margin-bottom:0"><span class="icon">📊</span> Student Results</div>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="sortTable('score')">Sort by Score</button>
+          <button class="btn btn-ghost btn-sm" onclick="sortTable('name')">Sort by Name</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Name</th><th>JLU ID</th><th>Roll No.</th><th>Email</th><th>Marks</th><th>Accuracy</th><th>Time Taken</th><th>Tab Switches</th><th>Status</th></tr>
+          </thead>
+          <tbody id="dashTableBody">
+            <tr><td colspan="10" style="text-align:center;color:var(--text3);padding:40px">Waiting for students to submit...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let currentStep = 1;
+let currentSort = 'score';
+let studentList = []; // array of email strings
+let inviteStatus = {}; // email -> bool
+
+// ── STEP NAV ──
+function goToStep(n) {
+  if (n === 2) {
+    const ins = document.getElementById('instituteName').value.trim();
+    const prog = document.getElementById('programName').value.trim();
+    const sem = document.getElementById('semester').value.trim();
+    const sn = document.getElementById('subjectName').value.trim();
+    const sc = document.getElementById('subjectCode').value.trim();
+    const fn = document.getElementById('facultyName').value.trim();
+    const fe = document.getElementById('facultyEmail').value.trim();
+    if (!ins||!prog||!sem||!sn||!sc||!fn||!fe) { alert('Please fill in all fields.'); return; }
+    Object.assign(QuizApp.state.faculty, {
+      instituteName: ins, programName: prog, semester: sem,
+      academicYear: document.getElementById('academicYear').value.trim(),
+      subjectName: sn, subjectCode: sc, facultyName: fn, facultyEmail: fe,
+      duration: parseInt(document.getElementById('duration').value)||30,
+      totalMarks: parseInt(document.getElementById('totalMarks').value)||20,
+    });
+  }
+  if (n === 5) updateLaunchSummary();
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`panelStep${i}`).classList.add('hidden');
+    const s = document.getElementById(`step${i}`);
+    s.classList.remove('active','done');
+    if (i < n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+  }
+  document.getElementById(`panelStep${n}`).classList.remove('hidden');
+  currentStep = n;
+}
+
+// ── QUESTION TABS ──
+function switchQTab(tab) {
+  document.getElementById('tabPaste').classList.toggle('hidden', tab!=='paste');
+  document.getElementById('tabUpload').classList.toggle('hidden', tab!=='upload');
+  document.querySelectorAll('#qTabs .tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='paste'?0:1)));
+}
+
+// ── STUDENT TABS ──
+function switchSTab(tab) {
+  ['Paste','Csv','Manual'].forEach(t => document.getElementById(`sTab${t}`).classList.toggle('hidden', t.toLowerCase()!==tab));
+  document.querySelectorAll('#sTabs .tab').forEach((t,i)=>t.classList.toggle('active',['paste','csv','manual'][i]===tab));
+}
+
+// ── PARSE QUESTIONS ──
+function parseQuestions() {
+  const text = document.getElementById('questionPaste').value.trim();
+  if (!text) { showParseError('Please paste some questions first.'); return; }
+  const questions = QuizApp.Parser.parse(text);
+  if (!questions.length) { showParseError('No questions found. Format: Q1. Question? A) opt B) opt C) opt D) opt Ans: A'); return; }
+  QuizApp.state.questions = questions;
+  document.getElementById('qCount').textContent = `${questions.length} questions`;
+  document.getElementById('questionList').innerHTML = questions.map((q,i) => `
+    <div class="q-preview"><div class="q-num">${i+1}</div><div>
+      <div style="font-weight:500;margin-bottom:4px">${q.questionText}</div>
+      <div style="color:var(--text2);font-size:0.82rem">${Object.entries(q.options).map(([k,v])=>
+        `<span style="margin-right:12px;${k===q.answer?'color:var(--success);font-weight:600':''}">${k}) ${v}${k===q.answer?' ✓':''}</span>`).join('')}</div>
+    </div></div>`).join('');
+  document.getElementById('questionPreview').style.display = 'block';
+  document.getElementById('parseError').classList.add('hidden');
+  document.getElementById('btnNextStep3').disabled = false;
+}
+function showParseError(msg) { const el=document.getElementById('parseError'); el.textContent='❌ '+msg; el.classList.remove('hidden'); }
+function clearQuestions() { QuizApp.state.questions=[]; document.getElementById('questionPreview').style.display='none'; document.getElementById('questionPaste').value=''; document.getElementById('btnNextStep3').disabled=true; }
+
+// ── DOCX ──
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadArea').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('uploadArea').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('uploadArea').classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f?.name.endsWith('.docx')) processDocx(f); }
+function handleDocxUpload(e) { if(e.target.files[0]) processDocx(e.target.files[0]); }
+async function processDocx(file) {
+  const area = document.getElementById('uploadArea');
+  area.innerHTML='<div class="upload-icon"><div class="spinner"></div></div><div class="upload-text">Reading...</div>';
+  try { const text=await QuizApp.DocxParser.extractText(file); document.getElementById('questionPaste').value=text; switchQTab('paste'); parseQuestions(); }
+  catch(e) { area.innerHTML='<div class="upload-icon">❌</div><div class="upload-text">Failed. Try pasting manually.</div>'; }
+  area.innerHTML='<div class="upload-icon">📄</div><div class="upload-text"><strong>Click to upload</strong> or drag & drop .docx</div>';
+}
+function downloadSampleQuestions() { QuizApp.Samples.downloadTxt(QuizApp.Samples.questionText,'sample_questions.txt'); }
+function downloadAnswerKey() { QuizApp.Samples.downloadTxt(QuizApp.Samples.answerKeyText(QuizApp.state.questions,QuizApp.state.faculty.subjectName,QuizApp.state.faculty.subjectCode),'answer_key.txt'); }
+
+// ── STUDENT EMAILS ──
+function handleDragOver2(e) { e.preventDefault(); document.getElementById('csvUploadArea').classList.add('dragover'); }
+function handleDragLeave2() { document.getElementById('csvUploadArea').classList.remove('dragover'); }
+function handleCsvDrop(e) { e.preventDefault(); document.getElementById('csvUploadArea').classList.remove('dragover'); if(e.dataTransfer.files[0]) processCsvFile(e.dataTransfer.files[0]); }
+function handleCsvUpload(e) { if(e.target.files[0]) processCsvFile(e.target.files[0]); }
+function processCsvFile(file) { const r=new FileReader(); r.onload=e=>parseEmailsFromText(e.target.result); r.readAsText(file); }
+function parseEmailsFromText(text) {
+  const found=[...new Set((text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g)||[]))];
+  if (!found.length) { document.getElementById('studentError').textContent='❌ No valid emails found.'; document.getElementById('studentError').classList.remove('hidden'); return; }
+  addEmailsToList(found);
+}
+function parseStudentPaste() { const t=document.getElementById('studentPaste').value.trim(); if(t) parseEmailsFromText(t); }
+function addEmailManually() {
+  const email=document.getElementById('manualEmail').value.trim();
+  if (!email||!email.includes('@')) { alert('Enter a valid email.'); return; }
+  addEmailsToList([email]); document.getElementById('manualEmail').value='';
+}
+function addEmailsToList(emails) {
+  const before=studentList.length;
+  emails.forEach(e=>{ if(!studentList.includes(e)) studentList.push(e); });
+  const skipped=emails.length-(studentList.length-before);
+  renderEmailTags(); document.getElementById('studentError').classList.add('hidden'); document.getElementById('btnNextStep4').disabled=false;
+  if (skipped>0) showToastFaculty(`${skipped} duplicate(s) skipped.`);
+}
+function renderEmailTags() {
+  document.getElementById('studentCount').textContent=`${studentList.length} students`;
+  document.getElementById('emailTagList').innerHTML=studentList.map((email,i)=>`
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:0.82rem;">
+      <span style="color:var(--accent)">✉️</span><span>${email}</span>
+      <button onclick="removeEmail(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:0 0 0 4px;line-height:1;">✕</button>
+    </div>`).join('');
+  document.getElementById('studentPreview').style.display=studentList.length?'block':'none';
+}
+function removeEmail(i) { studentList.splice(i,1); renderEmailTags(); document.getElementById('btnNextStep4').disabled=!studentList.length; }
+function clearStudents() { studentList=[]; renderEmailTags(); document.getElementById('btnNextStep4').disabled=true; }
+function downloadSampleCSV() { QuizApp.Samples.downloadTxt('rahul@gmail.com\npriya@jlu.edu.in\namit@gmail.com\nsneha@student.jlu.edu.in','sample_student_emails.txt'); }
+function showToastFaculty(msg) {
+  let t=document.getElementById('toastFac');
+  if(!t){t=document.createElement('div');t.id='toastFac';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:8px;font-size:0.85rem;z-index:9000;box-shadow:var(--shadow)';document.body.appendChild(t);}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2500);
+}
+
+// ── GMAIL ──
+function initGoogleAuth() {
+  const clientId=document.getElementById('googleClientId').value.trim();
+  if(!clientId){alert('Please enter your Google Client ID.');return;}
+  const scope='https://www.googleapis.com/auth/gmail.send';
+  const redirectUri=encodeURIComponent(window.location.href.split('?')[0]);
+  window.open(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`,'_blank','width=500,height=600');
+  setTimeout(()=>{const m=window.location.hash.match(/access_token=([^&]+)/);if(m)setGmailToken(m[1]);},3000);
+}
+function setGmailToken(token) {
+  QuizApp.state.faculty.gmailAccessToken=token;
+  document.getElementById('gmailStatus').innerHTML='<div class="alert alert-success">✅ Gmail connected! Invitations and scorecards will be sent automatically.</div>';
+  document.getElementById('gmailStatus').classList.remove('hidden');
+  document.getElementById('btnGoogleSignin').innerHTML='✅ Connected';
+  document.getElementById('btnGoogleSignin').disabled=true;
+}
+
+// ── LAUNCH SUMMARY ──
+function updateLaunchSummary() {
+  const f=QuizApp.state.faculty;
+  const quizUrl=document.getElementById('quizUrl')?.value?.trim()||window.location.href.replace('index.html','quiz.html');
+  QuizApp.state.faculty.quizUrl=quizUrl;
+  document.getElementById('inviteCount').textContent=studentList.length;
+  document.getElementById('launchSummary').innerHTML=`
+    <div class="stat-card"><div class="stat-value" style="font-size:1rem">${f.instituteName||'—'}</div><div class="stat-label">Institute</div></div>
+    <div class="stat-card"><div class="stat-value" style="font-size:1rem">${f.semester||'—'}</div><div class="stat-label">Semester</div></div>
+    <div class="stat-card"><div class="stat-value">${f.subjectCode}</div><div class="stat-label">Subject Code</div></div>
+    <div class="stat-card"><div class="stat-value">${QuizApp.state.questions.length}</div><div class="stat-label">Questions</div></div>
+    <div class="stat-card"><div class="stat-value">${f.duration}m</div><div class="stat-label">Duration</div></div>
+    <div class="stat-card"><div class="stat-value">${studentList.length}</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-value">${QuizApp.state.faculty.gmailAccessToken?'✅':'⚠️'}</div><div class="stat-label">Email</div></div>`;
+  const f2=QuizApp.state.faculty;
+  document.getElementById('invitePreview').innerHTML=`
+    <div style="background:var(--surface3);border-radius:8px;padding:18px;font-size:0.84rem;line-height:2">
+      <strong style="color:var(--text2)">To:</strong> student@email.com<br>
+      <strong style="color:var(--text2)">Subject:</strong> 📝 Quiz Invitation — ${f2.subjectName} (${f2.subjectCode})<br><br>
+      <em>Dear Student,</em><br>
+      🏛️ <strong>${f2.instituteName}</strong> | ${f2.programName} | ${f2.semester}<br>
+      📚 <strong>${f2.subjectName}</strong> (${f2.subjectCode})<br>
+      🔗 Quiz Link: <span style="color:var(--accent)">${quizUrl||'[your quiz URL]'}</span><br>
+      ⏱ Duration: ${f2.duration} min &nbsp;|&nbsp; 📋 Questions: ${QuizApp.state.questions.length} &nbsp;|&nbsp; 📊 Marks: ${f2.totalMarks}<br>
+      — <strong>${f2.facultyName}</strong>
+    </div>`;
+}
+
+// ── LAUNCH ──
+async function launchQuiz() {
+  if (!QuizApp.state.questions.length) { alert('No questions loaded!'); return; }
+  if (!studentList.length) { alert('No students added!'); return; }
+  QuizApp.state.quizLive=true;
+  QuizApp.state.faculty.instructions=document.getElementById('quizInstructions').value.trim();
+  QuizApp.state.faculty.quizUrl=document.getElementById('quizUrl')?.value?.trim()||window.location.href.replace('index.html','quiz.html');
+  sessionStorage.setItem('quizState',JSON.stringify({faculty:QuizApp.state.faculty,questions:QuizApp.state.questions,quizLive:true}));
+  const btn=document.getElementById('btnLaunch');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Launching...';
+  const progressEl=document.getElementById('launchProgress');
+  progressEl.classList.remove('hidden');
+  if (QuizApp.state.faculty.gmailAccessToken) {
+    let sent=0,failed=0;
+    for (const email of studentList) {
+      progressEl.innerHTML=`<div class="alert alert-info">📨 Sending invitation ${sent+failed+1} of ${studentList.length} to <strong>${email}</strong>...</div>`;
+      const html=QuizApp.Email.buildInvitationEmail({email});
+      const ok=await QuizApp.Email.send(email,`📝 Quiz Invitation — ${QuizApp.state.faculty.subjectName} (${QuizApp.state.faculty.subjectCode})`,html);
+      inviteStatus[email]=ok; ok?sent++:failed++;
+    }
+    progressEl.innerHTML=`<div class="alert alert-success">✅ Invitations sent: <strong>${sent}</strong>${failed?` | ❌ Failed: ${failed}`:''}</div>`;
+  } else {
+    progressEl.innerHTML=`<div class="alert alert-warning">⚠️ No email configured. Share quiz URL manually:<br><strong>${QuizApp.state.faculty.quizUrl}</strong></div>`;
+  }
+  setTimeout(showDashboard,1800);
+}
+
+function showDashboard() {
+  document.getElementById('screenSetup').classList.remove('active');
+  document.getElementById('screenDashboard').classList.add('active');
+  document.getElementById('quizStatusBadge').textContent='🔴 Live';
+  document.getElementById('quizStatusBadge').style.cssText+=';background:rgba(255,101,132,0.2);color:var(--danger)';
+  const f=QuizApp.state.faculty;
+  document.getElementById('dashSubject').textContent=`${f.subjectName} — Live`;
+  document.getElementById('dashSubInfo').textContent=`${f.instituteName} | ${f.programName} | ${f.semester} | ${f.subjectCode} | ${f.facultyName}`;
+  document.getElementById('statInvited').textContent=studentList.length;
+  renderInviteTable(); startDashboardPolling();
+}
+
+function renderInviteTable() {
+  document.getElementById('inviteTableBody').innerHTML=studentList.map((email,i)=>{
+    const submitted=Object.values(QuizApp.state.sessions).some(s=>s.email===email&&s.submitted);
+    return `<tr>
+      <td style="font-size:0.85rem">${email}</td>
+      <td><span class="badge ${inviteStatus[email]?'badge-success':'badge-warning'}">${inviteStatus[email]?'✅ Sent':'⏳ Pending'}</span></td>
+      <td><span class="badge ${submitted?'badge-success':'badge-info'}" id="subStatus_${i}">${submitted?'✅ Submitted':'⏳ Waiting'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function resendInvitations() {
+  if (!QuizApp.state.faculty.gmailAccessToken) { alert('Gmail not connected.'); return; }
+  if (!confirm(`Resend to all ${studentList.length} students?`)) return;
+  const btn=document.getElementById('btnResend');
+  btn.disabled=true; btn.textContent='⏳ Sending...';
+  for (const email of studentList) {
+    const html=QuizApp.Email.buildInvitationEmail({email});
+    inviteStatus[email]=await QuizApp.Email.send(email,`📝 Quiz Reminder — ${QuizApp.state.faculty.subjectName}`,html);
+  }
+  renderInviteTable(); btn.disabled=false; btn.textContent='🔁 Resend Invitations';
+  alert('Invitations resent!');
+}
+
+// ── DASHBOARD ──
+function startDashboardPolling() {
+  setInterval(()=>{
+    const stored=sessionStorage.getItem('submissions');
+    if(!stored) return;
+    JSON.parse(stored).forEach(sub=>{
+      if(!QuizApp.state.sessions[sub.id]){
+        QuizApp.state.sessions[sub.id]=sub;
+        updateDashboard();
+        // Update invite table submitted status
+        const idx=studentList.indexOf(sub.email);
+        if(idx>=0){const c=document.getElementById(`subStatus_${idx}`);if(c){c.textContent='✅ Submitted';c.className='badge badge-success';}}
+        if(QuizApp.state.faculty.gmailAccessToken) QuizApp.Email.sendStudentScorecard(sub);
+      }
+    });
+  },2000);
+}
+
+function updateDashboard() {
+  const sessions=Object.values(QuizApp.state.sessions).filter(s=>s.submitted);
+  const totalQ=QuizApp.state.questions.length;
+  document.getElementById('statTotal').textContent=sessions.length;
+  if(sessions.length){
+    document.getElementById('statAvg').textContent=`${(sessions.reduce((s,x)=>s+x.score,0)/sessions.length).toFixed(1)}/${totalQ}`;
+    document.getElementById('statTop').textContent=`${Math.max(...sessions.map(s=>s.score))}/${totalQ}`;
+    document.getElementById('statWarnings').textContent=sessions.reduce((s,x)=>s+x.tabSwitches,0);
+  }
+  const sorted=[...sessions].sort((a,b)=>currentSort==='name'?a.name.localeCompare(b.name):b.score-a.score);
+  document.getElementById('dashTableBody').innerHTML=sorted.length?sorted.map((s,i)=>`
+    <tr>
+      <td>${i+1}</td><td style="font-weight:600">${s.name}</td><td>${s.jluId}</td><td>${s.rollNumber}</td>
+      <td style="font-size:0.82rem">${s.email}</td>
+      <td><strong style="color:var(--accent)">${s.score}/${totalQ}</strong></td>
+      <td><span class="badge ${s.accuracy>=75?'badge-success':s.accuracy>=50?'badge-warning':'badge-danger'}">${s.accuracy}%</span></td>
+      <td>${QuizApp.Sessions.getTimeTaken(s)}</td>
+      <td><span class="badge ${s.tabSwitches>0?'badge-danger':'badge-success'}">${s.tabSwitches}</span></td>
+      <td><span class="badge badge-success">Submitted</span></td>
+    </tr>`).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:40px">Waiting for students to submit...</td></tr>';
+}
+
+function sortTable(by) { currentSort=by; updateDashboard(); }
+
+async function endQuiz() {
+  if (!confirm('End quiz and send full report to faculty?')) return;
+  QuizApp.state.quizLive=false; sessionStorage.setItem('quizEnded','true');
+  document.getElementById('quizStatusBadge').textContent='⬛ Ended';
+  const submitted=Object.values(QuizApp.state.sessions).filter(s=>s.submitted);
+  if (QuizApp.state.faculty.gmailAccessToken&&submitted.length) {
+    const btn=document.querySelector('.btn-warning'); btn.textContent='⏳ Sending report...'; btn.disabled=true;
+    await QuizApp.Email.sendFacultySummary();
+    btn.textContent='✅ Report Sent!'; alert('Full report sent to '+QuizApp.state.faculty.facultyEmail);
+  } else { alert('Quiz ended.'); }
+}
+
+function exportCSV() {
+  const sessions=Object.values(QuizApp.state.sessions).filter(s=>s.submitted);
+  if (!sessions.length){alert('No submissions yet.');return;}
+  const totalQ=QuizApp.state.questions.length;
+  let csv='Name,JLU ID,Roll Number,Email,Score,Total,Accuracy,Time Taken,Tab Switches\n';
+  sessions.sort((a,b)=>b.score-a.score).forEach(s=>{
+    csv+=`"${s.name}","${s.jluId}","${s.rollNumber}","${s.email}",${s.score},${totalQ},${s.accuracy}%,"${QuizApp.Sessions.getTimeTaken(s)}",${s.tabSwitches}\n`;
+  });
+  QuizApp.Samples.downloadTxt(csv,`${QuizApp.state.faculty.subjectCode}_results.csv`);
+}
+
+window.addEventListener('load',()=>{
+  const m=window.location.hash.match(/access_token=([^&]+)/);
+  if(m){setGmailToken(m[1]);window.location.hash='';}
+});
+</script>
+</body>
+</html>
+
+function goToStep(n) {
+  if (n === 2) {
+    const sn = document.getElementById('subjectName').value.trim();
+    const sc = document.getElementById('subjectCode').value.trim();
+    const fn = document.getElementById('facultyName').value.trim();
+    const fe = document.getElementById('facultyEmail').value.trim();
+    const ins = document.getElementById('instituteName').value.trim();
+    const prog = document.getElementById('programName').value.trim();
+    const sem = document.getElementById('semester').value.trim();
+    if (!ins || !prog || !sem || !sn || !sc || !fn || !fe) {
+      alert('Please fill in all fields including Institute, Program, Semester, Subject and Faculty details.');
+      return;
+    }
+    QuizApp.state.faculty.instituteName = ins;
+    QuizApp.state.faculty.programName = prog;
+    QuizApp.state.faculty.semester = sem;
+    QuizApp.state.faculty.academicYear = document.getElementById('academicYear').value.trim();
+    QuizApp.state.faculty.subjectName = sn;
+    QuizApp.state.faculty.subjectCode = sc;
+    QuizApp.state.faculty.facultyName = fn;
+    QuizApp.state.faculty.facultyEmail = fe;
+    QuizApp.state.faculty.duration = parseInt(document.getElementById('duration').value) || 30;
+    QuizApp.state.faculty.totalMarks = parseInt(document.getElementById('totalMarks').value) || 20;
+  }
+  if (n === 5) updateLaunchSummary();
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`panelStep${i}`).classList.add('hidden');
+    const s = document.getElementById(`step${i}`);
+    s.classList.remove('active','done');
+    if (i < n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+  }
+  document.getElementById(`panelStep${n}`).classList.remove('hidden');
+  currentStep = n;
+}
+
+function switchQTab(tab) {
+  document.getElementById('tabPaste').classList.toggle('hidden', tab !== 'paste');
+  document.getElementById('tabUpload').classList.toggle('hidden', tab !== 'upload');
+  document.querySelectorAll('#qTabs .tab').forEach((t,i) => t.classList.toggle('active', i === (tab==='paste'?0:1)));
+}
+
+function switchSTab(tab) {
+  ['Csv','Paste','Manual'].forEach((t,i) => {
+    document.getElementById(`sTab${t}`).classList.toggle('hidden', ['csv','paste','manual'][i] !== tab);
+  });
+  document.querySelectorAll('#sTabs .tab').forEach((t,i) => t.classList.toggle('active', ['csv','paste','manual'][i] === tab));
+}
+
+function parseQuestions() {
+  const text = document.getElementById('questionPaste').value.trim();
+  if (!text) { showParseError('Please paste some questions first.'); return; }
+  const questions = QuizApp.Parser.parse(text);
+  if (!questions.length) { showParseError('No questions found. Check format: Q1. Question? A) opt B) opt C) opt D) opt Ans: A'); return; }
+  QuizApp.state.questions = questions;
+  document.getElementById('qCount').textContent = `${questions.length} questions`;
+  document.getElementById('questionList').innerHTML = questions.map((q,i) => `
+    <div class="q-preview">
+      <div class="q-num">${i+1}</div>
+      <div>
+        <div style="font-weight:500;margin-bottom:4px">${q.questionText}</div>
+        <div style="color:var(--text2);font-size:0.82rem">${Object.entries(q.options).map(([k,v]) =>
+          `<span style="margin-right:12px;${k===q.answer?'color:var(--success);font-weight:600':''}">${k}) ${v}${k===q.answer?' ✓':''}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('questionPreview').style.display = 'block';
+  document.getElementById('parseError').classList.add('hidden');
+  document.getElementById('btnNextStep3').disabled = false;
+}
+
+function showParseError(msg) {
+  const el = document.getElementById('parseError');
+  el.textContent = '❌ ' + msg;
+  el.classList.remove('hidden');
+}
+
+function clearQuestions() {
+  QuizApp.state.questions = [];
+  document.getElementById('questionPreview').style.display = 'none';
+  document.getElementById('questionPaste').value = '';
+  document.getElementById('btnNextStep3').disabled = true;
+}
+
+// DOCX
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadArea').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('uploadArea').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('uploadArea').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f?.name.endsWith('.docx')) processDocx(f); }
+function handleDocxUpload(e) { if (e.target.files[0]) processDocx(e.target.files[0]); }
+async function processDocx(file) {
+  const area = document.getElementById('uploadArea');
+  area.innerHTML = '<div class="upload-icon"><div class="spinner"></div></div><div class="upload-text">Reading...</div>';
+  try {
+    const text = await QuizApp.DocxParser.extractText(file);
+    document.getElementById('questionPaste').value = text;
+    switchQTab('paste');
+    parseQuestions();
+  } catch(e) { area.innerHTML = '<div class="upload-icon">❌</div><div class="upload-text">Failed. Try pasting manually.</div>'; }
+  area.innerHTML = '<div class="upload-icon">📄</div><div class="upload-text"><strong>Click to upload</strong> or drag & drop .docx</div>';
+}
+
+function downloadSampleQuestions() { QuizApp.Samples.downloadTxt(QuizApp.Samples.questionText, 'sample_questions.txt'); }
+function downloadAnswerKey() {
+  QuizApp.Samples.downloadTxt(QuizApp.Samples.answerKeyText(QuizApp.state.questions, QuizApp.state.faculty.subjectName, QuizApp.state.faculty.subjectCode), 'answer_key.txt');
+}
+function downloadSampleCSV() {
+  QuizApp.Samples.downloadTxt(`Name,JLU ID,Roll Number,Email
+Rahul Sharma,JLU2023001,23CS001,rahul@gmail.com
+Priya Singh,JLU2023002,23CS002,priya@jlu.edu.in
+Amit Kumar,JLU2023003,23CS003,amit@gmail.com`, 'sample_students.csv');
+}
+
+// CSV / email-only student handling
+function handleDragOver2(e) { e.preventDefault(); document.getElementById('csvUploadArea').classList.add('dragover'); }
+function handleDragLeave2() { document.getElementById('csvUploadArea').classList.remove('dragover'); }
+function handleCsvDrop(e) { e.preventDefault(); document.getElementById('csvUploadArea').classList.remove('dragover'); if (e.dataTransfer.files[0]) processCsvFile(e.dataTransfer.files[0]); }
+function handleCsvUpload(e) { if (e.target.files[0]) processCsvFile(e.target.files[0]); }
+function processCsvFile(file) { const r = new FileReader(); r.onload = e => parseEmailsFromText(e.target.result); r.readAsText(file); }
+
+function parseEmailsFromText(text) {
+  const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  const found = [...new Set(text.match(emailRegex) || [])];
+  if (!found.length) {
+    document.getElementById('studentError').textContent = '❌ No valid email addresses found.';
+    document.getElementById('studentError').classList.remove('hidden');
+    return;
+  }
+  addEmailsToList(found);
+}
+
+function parseStudentPaste() {
+  const text = document.getElementById('studentPaste').value.trim();
+  if (text) parseEmailsFromText(text);
+}
+
+function addEmailManually() {
+  const email = document.getElementById('manualEmail').value.trim();
+  if (!email || !email.includes('@')) { alert('Enter a valid email.'); return; }
+  addEmailsToList([email]);
+  document.getElementById('manualEmail').value = '';
+}
+
+function addEmailsToList(emails) {
+  const before = studentList.length;
+  emails.forEach(e => { if (!studentList.includes(e)) studentList.push(e); });
+  const skipped = emails.length - (studentList.length - before);
+  renderEmailTags();
+  document.getElementById('studentError').classList.add('hidden');
+  document.getElementById('btnNextStep4').disabled = false;
+  if (skipped > 0) showToastFaculty(`${skipped} duplicate(s) skipped.`);
+}
+
+function renderEmailTags() {
+  document.getElementById('studentCount').textContent = `${studentList.length} students`;
+  document.getElementById('emailTagList').innerHTML = studentList.map((email, i) => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:0.82rem;">
+      <span style="color:var(--accent)">✉️</span><span>${email}</span>
+      <button onclick="removeEmail(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:0 0 0 4px;line-height:1;">✕</button>
+    </div>`).join('');
+  document.getElementById('studentPreview').style.display = studentList.length ? 'block' : 'none';
+}
+
+function removeEmail(i) { studentList.splice(i,1); renderEmailTags(); document.getElementById('btnNextStep4').disabled = !studentList.length; }
+function clearStudents() { studentList = []; renderEmailTags(); document.getElementById('btnNextStep4').disabled = true; }
+
+function downloadSampleCSV() {
+  QuizApp.Samples.downloadTxt(`rahul@gmail.com\npriya@jlu.edu.in\namit@gmail.com\nsneha@student.jlu.edu.in`, 'sample_student_emails.txt');
+}
+
+function showToastFaculty(msg) {
+  let t = document.getElementById('toastFac');
+  if (!t) { t = document.createElement('div'); t.id = 'toastFac'; t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:8px;font-size:0.85rem;z-index:9000;box-shadow:var(--shadow)'; document.body.appendChild(t); }
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+// GMAIL
+function initGoogleAuth() {
+  const clientId = document.getElementById('googleClientId').value.trim();
+  if (!clientId) { alert('Please enter your Google Client ID.'); return; }
+  const scope = 'https://www.googleapis.com/auth/gmail.send';
+  const redirectUri = encodeURIComponent(window.location.href.split('?')[0]);
+  window.open(`https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`, '_blank', 'width=500,height=600');
+  setTimeout(() => { const m = window.location.hash.match(/access_token=([^&]+)/); if (m) setGmailToken(m[1]); }, 3000);
+}
+
+function setGmailToken(token) {
+  QuizApp.state.faculty.gmailAccessToken = token;
+  document.getElementById('gmailStatus').innerHTML = '<div class="alert alert-success">✅ Gmail connected! Invitations and scorecards will be sent automatically.</div>';
+  document.getElementById('gmailStatus').classList.remove('hidden');
+  document.getElementById('btnGoogleSignin').innerHTML = '✅ Connected';
+  document.getElementById('btnGoogleSignin').disabled = true;
+}
+
+function updateLaunchSummary() {
+  const f = QuizApp.state.faculty;
+  const quizUrl = document.getElementById('quizUrl')?.value?.trim() || window.location.href.replace('index.html','quiz.html');
+  QuizApp.state.faculty.quizUrl = quizUrl;
+  document.getElementById('inviteCount').textContent = studentList.length;
+  document.getElementById('launchSummary').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${f.subjectCode}</div><div class="stat-label">Subject Code</div></div>
+    <div class="stat-card"><div class="stat-value">${QuizApp.state.questions.length}</div><div class="stat-label">Questions</div></div>
+    <div class="stat-card"><div class="stat-value">${f.duration}m</div><div class="stat-label">Duration</div></div>
+    <div class="stat-card"><div class="stat-value">${studentList.length}</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-value">${QuizApp.state.faculty.gmailAccessToken ? '✅' : '⚠️'}</div><div class="stat-label">Email</div></div>`;
+  const url = quizUrl || '[quiz URL]';
+  const f2 = QuizApp.state.faculty;
+  document.getElementById('invitePreview').innerHTML = `
+    <div style="background:var(--surface3);border-radius:8px;padding:18px;font-size:0.84rem;line-height:2">
+      <strong style="color:var(--text2)">To:</strong> student@email.com<br>
+      <strong style="color:var(--text2)">Subject:</strong> 📝 Quiz Invitation — ${f2.subjectName} (${f2.subjectCode})<br><br>
+      Dear <strong>[Student Name]</strong>,<br><br>
+      You are invited to take the <strong>${f2.subjectName}</strong> online quiz.<br><br>
+      🔗 <strong>Quiz Link:</strong> <span style="color:var(--accent)">${url}</span><br>
+      📋 <strong>Questions:</strong> ${QuizApp.state.questions.length} &nbsp;|&nbsp;
+      ⏱ <strong>Duration:</strong> ${f2.duration} minutes &nbsp;|&nbsp;
+      📊 <strong>Total Marks:</strong> ${f2.totalMarks}<br><br>
+      ${f2.instructions ? `📌 <strong>Instructions:</strong> ${f2.instructions}<br><br>` : ''}
+      Login on the quiz page using your <strong>JLU ID, Roll Number, and Email</strong>.<br>
+      Your scorecard will be emailed to you immediately after submission.<br><br>
+      Best of luck!<br>
+      <strong>${f2.facultyName}</strong><br>
+      <span style="color:var(--text3)">${f2.subjectName} | ${f2.subjectCode}</span>
+    </div>`;
+}
+
+async function launchQuiz() {
+  if (!QuizApp.state.questions.length) { alert('No questions loaded!'); return; }
+  if (!studentList.length) { alert('No students added!'); return; }
+  QuizApp.state.quizLive = true;
+  QuizApp.state.faculty.instructions = document.getElementById('quizInstructions').value.trim();
+  QuizApp.state.faculty.quizUrl = document.getElementById('quizUrl')?.value?.trim() || window.location.href.replace('index.html','quiz.html');
+  sessionStorage.setItem('quizState', JSON.stringify({ faculty: QuizApp.state.faculty, questions: QuizApp.state.questions, quizLive: true }));
+
+  const btn = document.getElementById('btnLaunch');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Launching...';
+
+  const progressEl = document.getElementById('launchProgress');
+  progressEl.classList.remove('hidden');
+
+  if (QuizApp.state.faculty.gmailAccessToken) {
+    let sent = 0, failed = 0;
+    for (const student of studentList) {
+      progressEl.innerHTML = `<div class="alert alert-info">📨 Sending invitation ${sent+failed+1} of ${studentList.length} to <strong>${student.email}</strong>...</div>`;
+      const html = QuizApp.Email.buildInvitationEmail(student);
+      const subject = `📝 Quiz Invitation — ${QuizApp.state.faculty.subjectName} (${QuizApp.state.faculty.subjectCode})`;
+      const ok = await QuizApp.Email.send(student.email, subject, html);
+      student.inviteSent = ok;
+      ok ? sent++ : failed++;
+    }
+    progressEl.innerHTML = `<div class="alert alert-success">✅ Invitations sent: <strong>${sent}</strong>${failed ? ` | ❌ Failed: ${failed}` : ''}</div>`;
+    setTimeout(showDashboard, 1800);
+  } else {
+    progressEl.innerHTML = `<div class="alert alert-warning">⚠️ Email not configured — quiz launched without invitations. Share the quiz URL manually.</div>`;
+    setTimeout(showDashboard, 1800);
+  }
+}
+
+function showDashboard() {
+  document.getElementById('screenSetup').classList.remove('active');
+  document.getElementById('screenDashboard').classList.add('active');
+  document.getElementById('quizStatusBadge').textContent = '🔴 Live';
+  document.getElementById('quizStatusBadge').style.cssText += ';background:rgba(255,101,132,0.2);color:var(--danger)';
+  const f = QuizApp.state.faculty;
+  document.getElementById('dashSubject').textContent = `${f.subjectName} — Live`;
+  document.getElementById('dashSubInfo').textContent = `${f.subjectCode} | ${QuizApp.state.questions.length} Questions | ${f.duration} min | ${f.facultyName}`;
+  document.getElementById('statInvited').textContent = studentList.length;
+  renderInviteTable();
+  startDashboardPolling();
+}
+
+function renderInviteTable() {
+  document.getElementById('inviteTableBody').innerHTML = studentList.map((email, i) => {
+    const submitted = Object.values(QuizApp.state.sessions).some(sess => sess.email === email && sess.submitted);
+    const inv = inviteStatus[email];
+    return `<tr>
+      <td style="font-size:0.85rem">${email}</td>
+      <td><span class="badge ${inv?'badge-success':'badge-warning'}">${inv?'✅ Sent':'⏳ Pending'}</span></td>
+      <td><span class="badge ${submitted?'badge-success':'badge-info'}" id="subStatus_${i}">${submitted?'✅ Submitted':'⏳ Waiting'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function resendInvitations() {
+  if (!QuizApp.state.faculty.gmailAccessToken) { alert('Gmail not connected.'); return; }
+  if (!confirm(`Resend invitations to all ${studentList.length} students?`)) return;
+  const btn = document.getElementById('btnResend');
+  btn.disabled = true; btn.textContent = '⏳ Sending...';
+  for (const s of studentList) {
+    const html = QuizApp.Email.buildInvitationEmail(s);
+    const ok = await QuizApp.Email.send(s.email, `📝 Quiz Reminder — ${QuizApp.state.faculty.subjectName}`, html);
+    s.inviteSent = ok;
+  }
+  renderInviteTable();
+  btn.disabled = false; btn.textContent = '🔁 Resend Invitations';
+  alert('Invitations resent!');
+}
+
+function startDashboardPolling() {
+  setInterval(() => {
+    const stored = sessionStorage.getItem('submissions');
+    if (!stored) return;
+    JSON.parse(stored).forEach(sub => {
+      if (!QuizApp.state.sessions[sub.id]) {
+        QuizApp.state.sessions[sub.id] = sub;
+        updateDashboard();
+        const cell = document.getElementById(`subStatus_${sub.jluId}`);
+        if (cell) { cell.textContent = '✅ Submitted'; cell.className = 'badge badge-success'; }
+        if (QuizApp.state.faculty.gmailAccessToken) QuizApp.Email.sendStudentScorecard(sub);
+      }
+    });
+  }, 2000);
+}
+
+function updateDashboard() {
+  const sessions = Object.values(QuizApp.state.sessions).filter(s => s.submitted);
+  const totalQ = QuizApp.state.questions.length;
+  document.getElementById('statTotal').textContent = sessions.length;
+  if (sessions.length) {
+    document.getElementById('statAvg').textContent = `${(sessions.reduce((s,x)=>s+x.score,0)/sessions.length).toFixed(1)}/${totalQ}`;
+    document.getElementById('statTop').textContent = `${Math.max(...sessions.map(s=>s.score))}/${totalQ}`;
+    document.getElementById('statWarnings').textContent = sessions.reduce((s,x)=>s+x.tabSwitches,0);
+  }
+  const sorted = [...sessions].sort((a,b) => currentSort==='name' ? a.name.localeCompare(b.name) : b.score-a.score);
+  document.getElementById('dashTableBody').innerHTML = sorted.length ? sorted.map((s,i) => `
+    <tr>
+      <td>${i+1}</td><td style="font-weight:600">${s.name}</td><td>${s.jluId}</td><td>${s.rollNumber}</td>
+      <td style="font-size:0.82rem">${s.email}</td>
+      <td><strong style="color:var(--accent)">${s.score}/${totalQ}</strong></td>
+      <td><span class="badge ${s.accuracy>=75?'badge-success':s.accuracy>=50?'badge-warning':'badge-danger'}">${s.accuracy}%</span></td>
+      <td>${QuizApp.Sessions.getTimeTaken(s)}</td>
+      <td><span class="badge ${s.tabSwitches>0?'badge-danger':'badge-success'}">${s.tabSwitches}</span></td>
+      <td><span class="badge badge-success">Submitted</span></td>
+    </tr>`).join('') :
+    '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:40px">Waiting for students to submit...</td></tr>';
+}
+
+function sortTable(by) { currentSort = by; updateDashboard(); }
+
+async function endQuiz() {
+  if (!confirm('End quiz and send full report to faculty?')) return;
+  QuizApp.state.quizLive = false;
+  sessionStorage.setItem('quizEnded','true');
+  document.getElementById('quizStatusBadge').textContent = '⬛ Ended';
+  const submitted = Object.values(QuizApp.state.sessions).filter(s=>s.submitted);
+  if (QuizApp.state.faculty.gmailAccessToken && submitted.length) {
+    const btn = document.querySelector('.btn-warning');
+    btn.textContent = '⏳ Sending report...'; btn.disabled = true;
+    await QuizApp.Email.sendFacultySummary();
+    btn.textContent = '✅ Report Sent!';
+    alert('Full report sent to ' + QuizApp.state.faculty.facultyEmail);
+  } else { alert('Quiz ended.' + (!submitted.length ? ' No submissions yet.' : '')); }
+}
+
+function exportCSV() {
+  const sessions = Object.values(QuizApp.state.sessions).filter(s=>s.submitted);
+  if (!sessions.length) { alert('No submissions yet.'); return; }
+  const totalQ = QuizApp.state.questions.length;
+  let csv = 'Name,JLU ID,Roll Number,Email,Score,Total,Accuracy,Time Taken,Tab Switches\n';
+  sessions.sort((a,b)=>b.score-a.score).forEach(s => {
+    csv += `"${s.name}","${s.jluId}","${s.rollNumber}","${s.email}",${s.score},${totalQ},${s.accuracy}%,"${QuizApp.Sessions.getTimeTaken(s)}",${s.tabSwitches}\n`;
+  });
+  QuizApp.Samples.downloadTxt(csv, `${QuizApp.state.faculty.subjectCode}_results.csv`);
+}
+
+window.addEventListener('load', () => {
+  const m = window.location.hash.match(/access_token=([^&]+)/);
+  if (m) { setGmailToken(m[1]); window.location.hash = ''; }
+});
+</script>
+</body>
+</html>

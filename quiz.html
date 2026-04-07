@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizApp — Student Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══════════ FULLSCREEN PROMPT ══════════ -->
+<div class="fullscreen-prompt" id="fullscreenPrompt">
+  <div style="font-size:3rem;margin-bottom:16px">🖥️</div>
+  <h2>Fullscreen Required</h2>
+  <p>This quiz must be taken in fullscreen mode to prevent cheating. Please click the button below to enter fullscreen.</p>
+  <button class="btn btn-primary btn-lg" onclick="enterFullscreen()">Enter Fullscreen & Start Quiz</button>
+  <p style="margin-top:16px;font-size:0.8rem;color:var(--text3)">Exiting fullscreen during the quiz will be flagged as a warning.</p>
+</div>
+
+<!-- ══════════ ANTI-CHEAT WARNING OVERLAY ══════════ -->
+<div class="anticheat-warning hidden" id="anticheatOverlay">
+  <div style="font-size:3rem;margin-bottom:8px">⚠️</div>
+  <h2>Warning!</h2>
+  <div class="warning-count" id="warningCount">1</div>
+  <p id="warningMsg">Tab switch detected. Please stay on this page.</p>
+  <p style="font-size:0.85rem;opacity:0.8" id="warningNote">Warning 3 will auto-submit your quiz.</p>
+  <button class="btn" style="background:#fff;color:#ef4444;font-weight:700;margin-top:8px" onclick="dismissWarning()">I Understand — Resume Quiz</button>
+</div>
+
+<!-- ══════════ SCREEN: LOGIN ══════════ -->
+<div class="screen active" id="screenLogin">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="brand" style="font-size:1.8rem;margin-bottom:4px">⚡ QuizApp</div>
+        <div id="loginSubjectBadge" style="font-size:0.85rem;color:var(--text2)">Loading quiz...</div>
+      </div>
+
+      <div id="loginQuizInfo" class="card" style="padding:16px;margin-bottom:24px;background:var(--surface2)">
+        <div style="font-size:0.8rem;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">Quiz Details</div>
+        <div id="loginInfoContent" style="color:var(--text3);font-size:0.9rem">Waiting for quiz to be launched by faculty...</div>
+      </div>
+
+      <div id="loginForm">
+        <h2 class="login-title">Student Login</h2>
+        <p class="login-sub">Enter your details to begin the quiz.</p>
+
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="studentName" placeholder="e.g. Rahul Sharma" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>JLU ID</label>
+            <input type="text" id="studentJluId" placeholder="e.g. JLU2023001" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label>Roll Number</label>
+            <input type="text" id="studentRollNo" placeholder="e.g. 23CS001" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="studentEmail" placeholder="your@email.com" autocomplete="off" />
+        </div>
+
+        <div id="loginError" class="alert alert-danger hidden"></div>
+
+        <button class="btn btn-primary btn-full mt-16" onclick="startQuiz()" id="btnStart">
+          Start Quiz →
+        </button>
+        <p style="text-align:center;font-size:0.78rem;color:var(--text3);margin-top:12px">
+          Your scorecard will be emailed to you after submission.
+        </p>
+      </div>
+
+      <div id="loginNotLive" class="hidden">
+        <div class="alert alert-warning">⏳ Quiz has not been launched yet. Please wait for your faculty.</div>
+        <button class="btn btn-ghost btn-full mt-8" onclick="checkQuizStatus()">🔄 Check Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: QUIZ ══════════ -->
+<div class="screen" id="screenQuiz">
+  <!-- Fixed header -->
+  <div class="quiz-header">
+    <div class="flex gap-12" style="align-items:center">
+      <span class="brand" style="font-size:1rem">⚡ QuizApp</span>
+      <span id="quizSubjectLabel" style="font-size:0.8rem;color:var(--text2)"></span>
+    </div>
+    <div class="quiz-timer" id="quizTimer">
+      <span>⏱</span><span id="timerDisplay">30:00</span>
+    </div>
+    <div style="font-size:0.85rem;color:var(--text2)">
+      <span id="questionProgress">Q 0/0</span>
+      <span style="margin-left:12px;color:var(--warning)" id="warningBadge"></span>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="quiz-progress-bar">
+    <div class="quiz-progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <!-- Quiz body -->
+  <div class="quiz-body">
+    <div class="container" style="padding-top:24px;padding-bottom:80px">
+      <div id="questionsContainer"></div>
+
+      <!-- Navigation -->
+      <div style="position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:14px 24px;">
+        <div style="max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center">
+          <button class="btn btn-ghost" id="btnPrev" onclick="prevQuestion()">← Previous</button>
+          <div style="font-size:0.85rem;color:var(--text2)">
+            <span id="answeredCount">0</span> of <span id="totalCount">0</span> answered
+          </div>
+          <button class="btn btn-primary" id="btnNext" onclick="nextQuestion()">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: RESULT ══════════ -->
+<div class="screen" id="screenResult">
+  <div class="container" style="padding-bottom:60px">
+
+    <!-- Hero -->
+    <div class="result-hero">
+      <div class="score-ring">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle cx="80" cy="80" r="70" fill="none" stroke="var(--surface3)" stroke-width="12"/>
+          <circle cx="80" cy="80" r="70" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
+            stroke-linecap="round" id="scoreCircle" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#43e8b0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-big" id="resultScore">—</div>
+          <div class="score-sub">Score</div>
+        </div>
+      </div>
+      <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:6px" id="resultName">Well done!</h2>
+      <p style="color:var(--text2)" id="resultSubject"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid mb-24">
+      <div class="stat-card"><div class="stat-value" id="rAccuracy">—</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat-card"><div class="stat-value" id="rTime">—</div><div class="stat-label">Time Taken</div></div>
+      <div class="stat-card"><div class="stat-value" id="rCorrect">—</div><div class="stat-label">Correct</div></div>
+      <div class="stat-card"><div class="stat-value" id="rWrong">—</div><div class="stat-label">Wrong</div></div>
+    </div>
+
+    <div id="emailSentAlert" class="hidden"></div>
+
+    <!-- Answer Review -->
+    <div class="flex-between mb-16">
+      <h3 style="font-family:'Syne',sans-serif;font-weight:700">Answer Review</h3>
+      <span style="font-size:0.85rem;color:var(--text2)">Green = correct, Red = wrong</span>
+    </div>
+    <div id="reviewList"></div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  Student Quiz Logic
+// ═══════════════════════════════════════════════════
+
+let currentSession = null;
+let currentQuestionIndex = 0;
+let timerInterval = null;
+let timeLeft = 0;
+let quizData = null;
+let warningCount = 0;
+const MAX_WARNINGS = 3;
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  loadQuizData();
+  setupAntiCheat();
+});
+
+function loadQuizData() {
+  const stored = sessionStorage.getItem('quizState');
+  if (stored) {
+    quizData = JSON.parse(stored);
+    QuizApp.state.faculty = quizData.faculty;
+    QuizApp.state.questions = quizData.questions;
+    QuizApp.state.quizLive = quizData.quizLive;
+  }
+
+  if (!quizData || !quizData.quizLive) {
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('loginNotLive').classList.remove('hidden');
+    return;
+  }
+
+  const f = quizData.faculty;
+  document.getElementById('loginSubjectBadge').textContent = `${f.subjectName} — ${f.subjectCode}`;
+  document.getElementById('loginInfoContent').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <span><strong>Subject:</strong> ${f.subjectName} (${f.subjectCode})</span>
+      <span><strong>Faculty:</strong> ${f.facultyName}</span>
+      <span><strong>Duration:</strong> ${f.duration} minutes</span>
+      <span><strong>Questions:</strong> ${f.questions?.length || quizData.questions.length}</span>
+      ${f.instructions ? `<span><strong>Instructions:</strong> ${f.instructions}</span>` : ''}
+    </div>`;
+  document.title = `QuizApp — ${f.subjectName}`;
+}
+
+function checkQuizStatus() {
+  loadQuizData();
+  if (quizData && quizData.quizLive) {
+    document.getElementById('loginNotLive').classList.add('hidden');
+    document.getElementById('loginForm').classList.remove('hidden');
+  } else {
+    alert('Quiz is not live yet. Please try again.');
+  }
+}
+
+// ── LOGIN ──
+function startQuiz() {
+  const name = document.getElementById('studentName').value.trim();
+  const jluId = document.getElementById('studentJluId').value.trim();
+  const rollNumber = document.getElementById('studentRollNo').value.trim();
+  const email = document.getElementById('studentEmail').value.trim();
+
+  if (!name || !jluId || !rollNumber || !email) {
+    showLoginError('Please fill in all fields.');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showLoginError('Please enter a valid email address.');
+    return;
+  }
+  if (!quizData || !quizData.quizLive) {
+    showLoginError('Quiz is not live. Please wait for faculty.');
+    return;
+  }
+
+  // Create session
+  currentSession = QuizApp.Sessions.create({ name, jluId, rollNumber, email });
+  timeLeft = QuizApp.state.faculty.duration * 60;
+
+  // Show fullscreen prompt
+  document.getElementById('fullscreenPrompt').style.display = 'flex';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ── FULLSCREEN ──
+function enterFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+
+  document.getElementById('fullscreenPrompt').style.display = 'none';
+  showQuizScreen();
+}
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && currentSession && !currentSession.submitted) {
+    triggerWarning('fullscreen', 'Fullscreen exit detected! Please stay in fullscreen.');
+  }
+});
+
+// ── QUIZ SCREEN ──
+function showQuizScreen() {
+  document.getElementById('screenLogin').classList.remove('active');
+  document.getElementById('screenQuiz').classList.add('active');
+  document.getElementById('quizSubjectLabel').textContent =
+    `${QuizApp.state.faculty.subjectName} — ${QuizApp.state.faculty.subjectCode}`;
+
+  renderQuestion(0);
+  startTimer();
+}
+
+// ── RENDER QUESTION ──
+function renderQuestion(index) {
+  const q = currentSession.questions[index];
+  const total = currentSession.questions.length;
+  currentQuestionIndex = index;
+
+  // Progress
+  const answered = Object.keys(currentSession.answers).length;
+  document.getElementById('questionProgress').textContent = `Q ${index+1}/${total}`;
+  document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('progressFill').style.width = `${((index+1)/total)*100}%`;
+
+  // Nav buttons
+  document.getElementById('btnPrev').disabled = index === 0;
+  const isLast = index === total - 1;
+  const nextBtn = document.getElementById('btnNext');
+  nextBtn.textContent = isLast ? '✅ Submit Quiz' : 'Next →';
+  nextBtn.className = isLast ? 'btn btn-success' : 'btn btn-primary';
+  if (isLast) {
+    nextBtn.onclick = () => confirmSubmit();
+  } else {
+    nextBtn.onclick = () => nextQuestion();
+  }
+
+  // Render question card
+  const selectedAnswer = currentSession.answers[q.questionText] || null;
+  document.getElementById('questionsContainer').innerHTML = `
+    <div class="question-card">
+      <div class="question-number">Question ${index + 1} of ${total}</div>
+      <div class="question-text">${q.questionText}</div>
+      <div class="options-grid">
+        ${q.optionsShuffled.map(key => `
+          <div class="option ${selectedAnswer === key ? 'selected' : ''}"
+               onclick="selectAnswer('${q.questionText.replace(/'/g,"\\'")}', '${key}', this)">
+            <div class="option-key">${key}</div>
+            <div class="option-text">${q.options[key]}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// ── SELECT ANSWER ──
+function selectAnswer(questionText, key, el) {
+  currentSession.answers[questionText] = key;
+  // Update UI
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  // Update answered count
+  document.getElementById('answeredCount').textContent = Object.keys(currentSession.answers).length;
+}
+
+function nextQuestion() {
+  if (currentQuestionIndex < currentSession.questions.length - 1) {
+    renderQuestion(currentQuestionIndex + 1);
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestionIndex > 0) {
+    renderQuestion(currentQuestionIndex - 1);
+  }
+}
+
+// ── CONFIRM SUBMIT ──
+function confirmSubmit() {
+  const answered = Object.keys(currentSession.answers).length;
+  const total = currentSession.questions.length;
+  const unanswered = total - answered;
+  if (unanswered > 0) {
+    if (!confirm(`You have ${unanswered} unanswered question(s). Are you sure you want to submit?`)) return;
+  } else {
+    if (!confirm('Submit your quiz? You cannot change answers after submission.')) return;
+  }
+  submitQuiz();
+}
+
+// ── SUBMIT QUIZ ──
+async function submitQuiz() {
+  clearInterval(timerInterval);
+  const session = QuizApp.Sessions.evaluate(currentSession.id);
+  currentSession = session;
+
+  // Save submission to sessionStorage for faculty dashboard
+  const existing = JSON.parse(sessionStorage.getItem('submissions') || '[]');
+  existing.push(session);
+  sessionStorage.setItem('submissions', JSON.stringify(existing));
+
+  // Send email if token available
+  let emailSent = false;
+  if (QuizApp.state.faculty.gmailAccessToken) {
+    try {
+      await QuizApp.Email.sendStudentScorecard(session);
+      emailSent = true;
+    } catch(e) { emailSent = false; }
+  }
+
+  showResultScreen(session, emailSent);
+}
+
+// ── RESULT SCREEN ──
+function showResultScreen(session, emailSent) {
+  document.getElementById('screenQuiz').classList.remove('active');
+  document.getElementById('screenResult').classList.add('active');
+
+  const total = session.questions.length;
+  const wrong = total - session.score - (session.questions.filter(q => !session.answers[q.questionText]).length);
+  const unanswered = session.questions.filter(q => !session.answers[q.questionText]).length;
+
+  // Score ring animation
+  const circumference = 439.8;
+  const offset = circumference - (session.accuracy / 100) * circumference;
+  setTimeout(() => {
+    document.getElementById('scoreCircle').style.transition = 'stroke-dashoffset 1.2s ease';
+    document.getElementById('scoreCircle').style.strokeDashoffset = offset;
+  }, 300);
+
+  document.getElementById('resultScore').textContent = `${session.score}/${total}`;
+  document.getElementById('resultName').textContent = session.accuracy >= 75 ? '🎉 Well Done!' : session.accuracy >= 50 ? '👍 Good Effort!' : '📚 Keep Practicing!';
+  document.getElementById('resultSubject').textContent = `${QuizApp.state.faculty.subjectName} — ${QuizApp.state.faculty.subjectCode} | ${session.name}`;
+  document.getElementById('rAccuracy').textContent = `${session.accuracy}%`;
+  document.getElementById('rTime').textContent = QuizApp.Sessions.getTimeTaken(session);
+  document.getElementById('rCorrect').textContent = session.score;
+  document.getElementById('rWrong').textContent = total - session.score;
+
+  // Email alert
+  const alertEl = document.getElementById('emailSentAlert');
+  if (emailSent) {
+    alertEl.innerHTML = `<div class="alert alert-success">📧 Scorecard emailed to ${session.email}</div>`;
+  } else {
+    alertEl.innerHTML = `<div class="alert alert-info">ℹ️ Email not configured. Show your score to faculty.</div>`;
+  }
+  alertEl.classList.remove('hidden');
+
+  // Review list
+  document.getElementById('reviewList').innerHTML = session.questions.map((q, i) => {
+    const chosen = session.answers[q.questionText];
+    const isCorrect = chosen === q.answer;
+    return `
+      <div class="review-item ${isCorrect ? 'correct' : 'wrong'}">
+        <div class="review-q"><strong>Q${i+1}.</strong> ${q.questionText}</div>
+        <div class="review-answers">
+          ${chosen ? `<span class="review-ans your">Your answer: ${chosen}) ${q.options[chosen] || ''}</span>` : `<span class="review-ans" style="background:rgba(255,209,102,0.15);color:var(--warning)">Not Answered</span>`}
+          ${!isCorrect ? `<span class="review-ans correct-ans">Correct: ${q.answer}) ${q.options[q.answer]}</span>` : ''}
+          <span style="font-size:1.1rem">${isCorrect ? '✅' : '❌'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── TIMER ──
+function startTimer() {
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      alert('⏰ Time is up! Your quiz is being submitted.');
+      submitQuiz();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const display = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  const el = document.getElementById('timerDisplay');
+  const timer = document.getElementById('quizTimer');
+  el.textContent = display;
+  timer.classList.remove('warning','danger');
+  if (timeLeft <= 60) timer.classList.add('danger');
+  else if (timeLeft <= 300) timer.classList.add('warning');
+}
+
+// ── ANTI-CHEAT ──
+function setupAntiCheat() {
+  // Block copy, paste, cut, right-click
+  ['copy','paste','cut','contextmenu'].forEach(evt => {
+    document.addEventListener(evt, (e) => {
+      if (currentSession && !currentSession.submitted) {
+        e.preventDefault();
+        currentSession.copyAttempts++;
+        showToast('⛔ Copy/paste is disabled during the quiz.');
+      }
+    });
+  });
+
+  // Tab switch / visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && currentSession && !currentSession.submitted) {
+      triggerWarning('tab', 'Tab switch detected! Stay on the quiz tab.');
+    }
+  });
+
+  // Window blur (alt-tab, etc.)
+  window.addEventListener('blur', () => {
+    if (currentSession && !currentSession.submitted) {
+      triggerWarning('blur', 'Window lost focus! Please return to the quiz.');
+    }
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (!currentSession || currentSession.submitted) return;
+    // Block F12, Ctrl+U, Ctrl+Shift+I, Ctrl+C, Ctrl+V, etc.
+    if (e.key === 'F12' || (e.ctrlKey && ['u','s','a','c','v','x','p'].includes(e.key.toLowerCase()))
+        || (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase()))) {
+      e.preventDefault();
+      showToast('⛔ This action is disabled during the quiz.');
+    }
+  });
+}
+
+function triggerWarning(type, msg) {
+  warningCount++;
+  currentSession.tabSwitches++;
+
+  // Update warning badge
+  document.getElementById('warningBadge').textContent = `⚠️ ${warningCount} warning(s)`;
+
+  if (warningCount >= MAX_WARNINGS) {
+    // Auto submit
+    document.getElementById('anticheatOverlay').classList.remove('hidden');
+    document.getElementById('warningCount').textContent = warningCount;
+    document.getElementById('warningMsg').textContent = 'Maximum warnings reached. Your quiz is being auto-submitted!';
+    document.getElementById('warningNote').textContent = '';
+    setTimeout(() => {
+      document.getElementById('anticheatOverlay').classList.add('hidden');
+      submitQuiz();
+    }, 3000);
+    return;
+  }
+
+  const overlay = document.getElementById('anticheatOverlay');
+  document.getElementById('warningCount').textContent = warningCount;
+  document.getElementById('warningMsg').textContent = msg;
+  document.getElementById('warningNote').textContent = `Warning ${warningCount} of ${MAX_WARNINGS}. Warning ${MAX_WARNINGS} will auto-submit your quiz.`;
+  overlay.classList.remove('hidden');
+}
+
+function dismissWarning() {
+  document.getElementById('anticheatOverlay').classList.add('hidden');
+  // Try re-enter fullscreen
+  if (!document.fullscreenElement && currentSession && !currentSession.submitted) {
+    enterFullscreenSilently();
+  }
+}
+
+function enterFullscreenSilently() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+}
+
+// ── TOAST ──
+let toastTimeout;
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:var(--surface3);border:1px solid var(--border);
+      color:var(--text);padding:10px 20px;border-radius:8px;
+      font-size:0.85rem;z-index:9000;animation:fadeIn 0.2s ease;
+      white-space:nowrap;box-shadow:var(--shadow)`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+</script>
+</body>
+</html>
